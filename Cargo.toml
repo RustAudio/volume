@@ -11,4 +11,3 @@ homepage = "https://github.com/RustAudio/volume"
 
 [dependencies]
 dsp-chain = "0.5.4"
-
