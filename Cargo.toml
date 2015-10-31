@@ -1,6 +1,6 @@
 [package]
 name = "volume"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["mitchmindtree <mitchell.nordine@gmail.com>"]
 description = "A simple dsp-chain node for multiplying the amplitude of the output buffer by some volume."
 readme = "README.md"
