@@ -10,5 +10,5 @@ repository = "https://github.com/RustAudio/volume.git"
 homepage = "https://github.com/RustAudio/volume"
 
 [dependencies]
-dsp-chain = "0.5.4"
+dsp-chain = "0.9.0"
 time_calc = "0.10.0"
