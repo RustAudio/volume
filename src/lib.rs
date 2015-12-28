@@ -1,6 +1,4 @@
-/// 
 /// A simple dsp node for multiplying the amplitude of its inputs by some given multiplier.
-///
 
 
 extern crate dsp;
