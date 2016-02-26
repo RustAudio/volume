@@ -51,8 +51,7 @@ impl Volume {
 
 
 impl<S> dsp::Node<S> for Volume
-    where S: dsp::Sample + dsp::FromSample<f32>,
-          f32: dsp::FromSample<S>,
+    where S: dsp::Sample + dsp::sample::Duplex<f32>,
 {
 
     #[inline]
