@@ -50,10 +50,14 @@ impl Volume {
 }
 
 
-impl<S> dsp::Node<S> for Volume where S: dsp::Sample {
+impl<S> dsp::Node<S> for Volume
+    where S: dsp::Sample + dsp::FromSample<f32>,
+          f32: dsp::FromSample<S>,
+{
 
     #[inline]
     fn audio_requested(&mut self, buffer: &mut [S], settings: dsp::Settings) {
+        use dsp::Sample;
         match self.maybe_prev {
 
             // If the volume used for the previous buffer is different to the volume used for the
@@ -77,7 +81,7 @@ impl<S> dsp::Node<S> for Volume where S: dsp::Sample {
                     for channel in 0..(settings.channels as usize) {
                         let idx = frame * (settings.channels as usize) + channel;
                         let sample = &mut buffer[idx];
-                        *sample = sample.mul_amp(volume);
+                        *sample = (sample.to_sample::<f32>() * volume).to_sample();
                     }
                 }
 
@@ -85,13 +89,13 @@ impl<S> dsp::Node<S> for Volume where S: dsp::Sample {
                 let start_of_remaining = interpolation_frames * settings.channels as usize;
                 for idx in start_of_remaining..buffer.len() {
                     let sample = &mut buffer[idx];
-                    *sample = sample.mul_amp(volume);
+                    *sample = (sample.to_sample::<f32>() * volume).to_sample();
                 }
             },
 
             // Otherwise, simply multiply every sample by the current volume.
             _ => for sample in buffer.iter_mut() {
-                *sample = sample.mul_amp(self.current);
+                *sample = (sample.to_sample::<f32>() * self.current).to_sample();
             },
 
         }
