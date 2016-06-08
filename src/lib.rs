@@ -1,5 +1,4 @@
-/// A simple dsp node for multiplying the amplitude of its inputs by some given multiplier.
-
+//! A simple dsp node for multiplying the amplitude of its inputs by some given multiplier.
 
 extern crate dsp;
 extern crate time_calc as time;
@@ -50,13 +49,13 @@ impl Volume {
 }
 
 
-impl<S> dsp::Node<S> for Volume
-    where S: dsp::Sample + dsp::sample::Duplex<f32>,
+impl<F> dsp::Node<F> for Volume
+    where F: dsp::Frame,
 {
 
     #[inline]
-    fn audio_requested(&mut self, buffer: &mut [S], settings: dsp::Settings) {
-        use dsp::Sample;
+    fn audio_requested(&mut self, buffer: &mut [F], sample_hz: f64) {
+        use dsp::{Frame, Sample};
         match self.maybe_prev {
 
             // If the volume used for the previous buffer is different to the volume used for the
@@ -66,35 +65,31 @@ impl<S> dsp::Node<S> for Volume
 
                 // Calculate the interpolation duration in frames along with the volume increment
                 // to use for interpolation.
-                let interpolation_frames = ::std::cmp::min(
-                    settings.frames as usize,
-                    time::Ms(self.interpolation_ms).samples(settings.sample_hz as f64) as usize
+                let interpolation_frames = std::cmp::min(
+                    buffer.len(),
+                    time::Ms(self.interpolation_ms).samples(sample_hz) as usize,
                 );
                 let volume_diff = self.current - prev;
                 let volume_increment = volume_diff * (1.0 / interpolation_frames as f32);
                 let mut volume = prev;
 
                 // Interpolated frames.
-                for frame in 0..interpolation_frames {
+                for idx in 0..interpolation_frames {
                     volume += volume_increment;
-                    for channel in 0..(settings.channels as usize) {
-                        let idx = frame * (settings.channels as usize) + channel;
-                        let sample = &mut buffer[idx];
-                        *sample = (sample.to_sample::<f32>() * volume).to_sample();
-                    }
+                    let frame = &mut buffer[idx];
+                    *frame = frame.scale_amp(volume.to_sample());
                 }
 
                 // Remaining frames.
-                let start_of_remaining = interpolation_frames * settings.channels as usize;
-                for idx in start_of_remaining..buffer.len() {
-                    let sample = &mut buffer[idx];
-                    *sample = (sample.to_sample::<f32>() * volume).to_sample();
+                for idx in interpolation_frames..buffer.len() {
+                    let frame = &mut buffer[idx];
+                    *frame = frame.scale_amp(volume.to_sample());
                 }
             },
 
             // Otherwise, simply multiply every sample by the current volume.
-            _ => for sample in buffer.iter_mut() {
-                *sample = (sample.to_sample::<f32>() * self.current).to_sample();
+            _ => for frame in buffer.iter_mut() {
+                *frame = frame.scale_amp(self.current.to_sample());
             },
 
         }
